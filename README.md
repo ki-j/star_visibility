@@ -10,4 +10,4 @@ to see star visibility for the chosen observing night.
 
 To see visibility for the current date, run:
 
-<center><tt>python staralt.py \< now / today / tonight \></tt></center>
+<center><tt>python staralt.py < now / today / tonight ></tt></center>
