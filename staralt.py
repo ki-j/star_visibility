@@ -267,7 +267,12 @@ ax.set_xticklabels(labels)
 
 ax.set_ylim(0, 90), ax.set_ylabel('Altitude (degrees)')
 
-ax.set_xlim(sunriseset[0]-0.75*u.hour, sunriseset[-1]+0.75*u.hour)
+if now < sunriseset[0]:
+    ax.set_xlim(now-0.75*u.hour, sunriseset[-1]+0.75*u.hour)
+elif now > sunriseset[-1]:
+    ax.set_xlim(sunriseset[0]-0.75*u.hour, now+0.75*u.hour)
+else:
+    ax.set_xlim(sunriseset[0]-0.75*u.hour, sunriseset[-1]+0.75*u.hour)
 
 plt.legend()
 
