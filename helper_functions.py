@@ -6,7 +6,17 @@ from astropy.time import Time
 from astropy import units as u
 from astropy import constants as const
 from astropy.visualization import time_support, quantity_support
+quantity_support()# imports
+import numpy as np
+from matplotlib import pyplot as plt
+
+from astropy.time import Time
+from astropy import units as u
+from astropy import constants as const
+from astropy.visualization import time_support, quantity_support
 quantity_support()
+time_support()
+from astropy.coordinates import SkyCoord, EarthLocation, get_body
 time_support()
 from astropy.coordinates import SkyCoord, EarthLocation, get_body
 
@@ -254,9 +264,13 @@ def hourText(time):
     """
     take the Time() object and return just hh:mm UTC
     """
-    t = str(time).split()
-    hr = t[1].split(":")[0] + ':' + t[1].split(":")[1] + ' UTC'
-    return hr
+    # t = time.iso.split()[1] # isolate just the time
+    # hr = t.split(':')[0]
+    # mnt = t.split(':')[1]
+    hr = time.datetime.hour
+    mnt = time.datetime.minute
+    hour = str(hr) + ':' + str(mnt) + ' UTC'
+    return hour
 
 # full plotting function
 # turn it into a function

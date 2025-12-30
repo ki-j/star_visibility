@@ -19,17 +19,29 @@ from helper_functions import whatsGoingOnTonight, hourText, find_moondist
 
 ### LOCATION
 
-location = EarthLocation.of_site('Roque de los Muchachos') # <--- input location here
+# location = EarthLocation.of_site('Roque de los Muchachos') # <--- input location here
+
+location = EarthLocation(lat=52*u.deg, lon=-1.8*u.deg, height=140*u.m) # <-- birmingham
 
 # location = EarthLocation(lat=53*deg, lon=1.5*deg, height=131*m) # or manually here
 
 
 ### OBSERVING DATE
-observing_date = Time('2025-02-05', location=location) # <--- input observing date here (YYYY-MM-DD)
-today = Time(Time.now().iso.split()[0], location=location) # <--- if you want to see tonight
+obsdate = Time('2025-02-05', location=location) # <--- input observing date here (YYYY-MM-DD) (if not looking for current observing conditions)
+    
+now = Time(Time.now(), location=location, format='iso')
+today = Time(now.iso.split()[0], location=location) # <--- if you want to see tonight
 
-if str(sys.argv[0]) == 'now' or str(sys.argv[0]) == 'today' or str(sys.argv[0]) == 'tonight':
-    observing_date = today
+if str(sys.argv[1]) == 'now' or str(sys.argv[1]) == 'today' or str(sys.argv[1]) == 'tonight':
+    if float(now.datetime.hour) > 12.: # becaue of how the day is defined. Sunset is the date - 1 day, easier just to add a day now so I did
+        observing_date = today  + 1*u.day # vis today
+    else:
+        observing_date = today
+    plotnow = True
+else:
+    observing_date = obsdate + 1*u.day # vis on given date
+    plotnow = False
+    
 
 ### TARGET(S)
 vega = SkyCoord(ra="18h36m56.33635s", dec="+38d47m01.2802s", frame="icrs")
@@ -90,7 +102,7 @@ night = target_list[0][0] # array of times for the night
 fig, ax = plt.subplots(figsize=[20, 10])
 
 
-
+textHeight = 65 # the bottom of the annotation text (in degrees of altitude)
 
 # SUNRISE AND SUNSET
 # sunrise
@@ -101,7 +113,7 @@ ax.vlines(sunriseset[0], 0, 90,
          ) # line showing sunset
 
 ax.annotate(f'Sunset: {hourText(sunriseset[0])}', 
-            (sunriseset[0] + 0.0075*u.d, 71), 
+            (sunriseset[0] + 0.0075*u.d, textHeight), 
             color='red', 
             rotation=90, 
             fontsize=8, 
@@ -117,7 +129,7 @@ ax.vlines(sunriseset[1], 0, 90,
          ) # line showing sunrise
 
 ax.annotate(f'Sunrise: {hourText(sunriseset[1])}', 
-            (sunriseset[1] - 0.012*u.d, 71), 
+            (sunriseset[1] - 0.012*u.d, textHeight), 
             color='red', 
             rotation=90, 
             fontsize=8, 
@@ -141,7 +153,7 @@ ax.fill_between(np.linspace(twlt[0][0], twlt[0][1]), 0, 90,
                )
 
 ax.annotate(f'Civil: {hourText(twlt[0][0])}', 
-            (twlt[0][0] - 0.012*u.d, 71), 
+            (twlt[0][0] - 0.012*u.d, textHeight), 
             color='k', 
             rotation=90, 
             fontsize=8, 
@@ -149,7 +161,7 @@ ax.annotate(f'Civil: {hourText(twlt[0][0])}',
            )
 
 ax.annotate(f'Civil: {hourText(twlt[0][1])}', 
-            (twlt[0][1] + 0.0075*u.d, 71), 
+            (twlt[0][1] + 0.0075*u.d, textHeight), 
             color='k', 
             rotation=90, 
             fontsize=8, 
@@ -164,7 +176,7 @@ ax.fill_between(np.linspace(twlt[1][0], twlt[1][1]), 0, 90,
                )
 
 ax.annotate(f'Nauticle: {hourText(twlt[1][0])}', 
-            (twlt[1][0] - 0.012*u.d, 71), 
+            (twlt[1][0] - 0.012*u.d, textHeight), 
             color='#909090', 
             rotation=90, 
             fontsize=8, 
@@ -172,7 +184,7 @@ ax.annotate(f'Nauticle: {hourText(twlt[1][0])}',
            )
 
 ax.annotate(f'Nauticle: {hourText(twlt[1][1])}', 
-            (twlt[1][1] + 0.0075*u.d, 71), 
+            (twlt[1][1] + 0.0075*u.d, textHeight), 
             color='#909090', 
             rotation=90, 
             fontsize=8, 
@@ -187,7 +199,7 @@ ax.fill_between(np.linspace(twlt[2][0], twlt[2][1]), 0, 90,
                )
 
 ax.annotate(f'Astronomical: {hourText(twlt[2][0])}', 
-            (twlt[2][0] - 0.012*u.d, 71), 
+            (twlt[2][0] - 0.012*u.d, textHeight), 
             color='white', 
             alpha=0.7, 
             rotation=90, 
@@ -196,7 +208,7 @@ ax.annotate(f'Astronomical: {hourText(twlt[2][0])}',
            )
 
 ax.annotate(f'Astronomical: {hourText(twlt[2][1])}', 
-            (twlt[2][1] + 0.0075*u.d, 71), 
+            (twlt[2][1] + 0.0075*u.d, textHeight), 
             color='white', 
             alpha=0.7, 
             rotation=90, 
@@ -221,33 +233,41 @@ for i in range(len(target_list)):
 
 ax.plot(night_moon, altitudes_moon, color='grey', linestyle='dashed', alpha=0.75)
 
+# vertical 'now' line
+if plotnow:
+    ax.vlines(now, 0, 90,
+             color='cyan',
+             linestyle='dashed',
+             alpha=1.
+                 ) # plot vertical 'now' line
+
+    ax.annotate(f'{hourText(now)}', 
+            (now - 0.012*u.d, textHeight), 
+            color='cyan', 
+            rotation=90, 
+            fontsize=8, 
+            fontweight='bold'
+           ) # annotate now line
 
 
 # LIMITS, LABELS & TITLE
 ax.set_title(f'{night[0].to_string().split()[0]} $|$ lat={location.lat:.2f} long={location.lon:.2f} elev={location.height:.0f}')
 
 labels = []
-hour = night[0].datetime.hour
-end = night[-1].datetime.hour + 1
+tickvals = []
+for i in range(len(night)-1):
+    if night[i].datetime.hour < night[i+1].datetime.hour or night[i].datetime.hour > night[i+1].datetime.hour:
+        labels.append(night[i].datetime.hour)
+        tickvals.append(night[i]-1*u.hour)
 
-while hour != end:
+# import pdb; pdb.set_trace()
 
-    if hour > 23:
-        hour = hour - 24
-    labels.append(hour)
-    hour += 1
-    
-    if hour == end:
-        break
-
-
-ax.set_xticks(np.linspace(night[0], night[-1], len(labels)))
-
+ax.set_xticks(ticks=Time(tickvals))
 ax.set_xticklabels(labels)
 
 ax.set_ylim(0, 90), ax.set_ylabel('Altitude (degrees)')
 
-ax.set_xlim(night[0], night[-1])
+ax.set_xlim(sunriseset[0]-0.75*u.hour, sunriseset[-1]+0.75*u.hour)
 
 plt.legend()
 
