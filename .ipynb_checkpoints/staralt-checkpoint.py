@@ -53,6 +53,13 @@ LAMOST0359 = SkyCoord(ra="03h59m13.626515992s", dec="+40d50m35.095271748s", fram
 targets = [vega, V1315aql, LAMOST0359]
 starname = ['vega', 'V1315aql', 'LAMOST0359']
 
+# TELESCOPE
+INT = True
+if INT:
+    lower_shutter = 33 # degrees height
+    lower_limit = 20 # degrees height
+    telescope = 'INT (2.5 m)'
+
 # SUN AND MOON
 sun = get_body('sun', observing_date)
 moon = get_body('moon', observing_date)
@@ -99,12 +106,14 @@ night = target_list[0][0] # array of times for the night
 
 
 # create the plot
-fig, ax = plt.subplots(figsize=[20, 10])
+fig, ax = plt.subplots(figsize=[20, 12])
 
 
 textHeight = 65 # the bottom of the annotation text (in degrees of altitude)
 
 # SUNRISE AND SUNSET
+backColour = '#000510'
+
 # sunrise
 ax.vlines(sunriseset[0], 0, 90, 
           color='red', 
@@ -138,7 +147,7 @@ ax.annotate(f'Sunrise: {hourText(sunriseset[1])}',
 
 # fill
 ax.fill_between(np.linspace(sunriseset[0], sunriseset[1]), 0, 90, 
-                color='#000510', 
+                color=backColour, 
                 alpha=0.4
                ) # darken
 
@@ -148,7 +157,7 @@ ax.fill_between(np.linspace(sunriseset[0], sunriseset[1]), 0, 90,
 # TWILIGHT
 # civil
 ax.fill_between(np.linspace(twlt[0][0], twlt[0][1]), 0, 90, 
-                color='#000510', 
+                color=backColour, 
                 alpha=0.5
                )
 
@@ -171,7 +180,7 @@ ax.annotate(f'Civil: {hourText(twlt[0][1])}',
 
 # nauticle
 ax.fill_between(np.linspace(twlt[1][0], twlt[1][1]), 0, 90, 
-                color='#000510', 
+                color=backColour, 
                 alpha=0.5
                )
 
@@ -194,7 +203,7 @@ ax.annotate(f'Nauticle: {hourText(twlt[1][1])}',
 
 # astronomical
 ax.fill_between(np.linspace(twlt[2][0], twlt[2][1]), 0, 90, 
-                color='#000510', 
+                color=backColour, 
                 alpha=0.5
                )
 
@@ -251,7 +260,7 @@ if plotnow:
 
 
 # LIMITS, LABELS & TITLE
-ax.set_title(f'{night[0].to_string().split()[0]} $|$ lat={location.lat:.2f} long={location.lon:.2f} elev={location.height:.0f}')
+ax.set_title(fr'{night[0].to_string().split()[0]} $|$ lat={location.lat:.2f} long={location.lon:.2f} elev={location.height:.0f} $|$ telescope = {telescope}', fontsize=14)
 
 labels = []
 tickvals = []
@@ -260,17 +269,59 @@ for i in range(len(night)-1):
         labels.append(night[i].datetime.hour)
         tickvals.append(night[i]-1*u.hour)
 
-# import pdb; pdb.set_trace()
-
 ax.set_xticks(ticks=Time(tickvals))
 ax.set_xticklabels(labels)
 
-ax.set_ylim(0, 90), ax.set_ylabel('Altitude (degrees)')
+ax.set_xlabel('Time (UTC)', fontsize=14)
+ax.set_ylim(0, 90), ax.set_ylabel('Altitude (degrees)', fontsize=14)
 
-ax.set_xlim(sunriseset[0]-0.75*u.hour, sunriseset[-1]+0.75*u.hour)
+if str(sys.argv[1]) == 'now' or str(sys.argv[1]) == 'today' or str(sys.argv[1]) == 'tonight':
+    if now < sunriseset[0]:
+        xlim = [now-0.75*u.hour, sunriseset[-1]+0.75*u.hour]
+        ax.set_xlim(xlim[0], xlim[1])
+    elif now > sunriseset[-1]:
+        xlim = [sunriseset[0]-0.75*u.hour, now+0.75*u.hour]
+        ax.set_xlim(xlim[0], xlim[1])
+    else:
+        xlim = [sunriseset[0]-0.75*u.hour, sunriseset[-1]+0.75*u.hour]
+        ax.set_xlim(xlim[0], xlim[1])
+else:
+    xlim = [sunriseset[0]-0.75*u.hour, sunriseset[-1]+0.75*u.hour]
+    ax.set_xlim(xlim[0], xlim[1])
+
+
+# TELESCOPE LIMITS
+# lower shutter limit
+ax.fill_between(np.linspace(xlim[0], xlim[1]), 0, lower_shutter, 
+                color='#000000', 
+                alpha=0.3
+               )
+
+ax.annotate(f'Lower shutter limit', 
+            (twlt[2][1] + 0.1*u.hour, lower_shutter - 1.5), 
+            color='orange', 
+            rotation=0, 
+            fontsize=8, 
+            fontweight='bold'
+           ) # annotate lower shutter line
+
+# lower telescope limit
+ax.fill_between(np.linspace(xlim[0], xlim[1]), 0, lower_limit, 
+                color='#000000', 
+                alpha=0.3
+               )
+
+ax.annotate(f'Lower telescope limit', 
+            (twlt[2][1] + 0.1*u.hour, lower_limit - 1.5), 
+            color='orange', 
+            rotation=0, 
+            fontsize=8, 
+            fontweight='bold'
+           ) # annotate lower limit line
+
 
 plt.legend()
 
-fig.savefig('STARALT.pdf', bbox_inches='tight')
+fig.savefig('object_visibility.pdf', bbox_inches='tight')
 
 plt.show()
