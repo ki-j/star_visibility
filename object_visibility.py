@@ -13,48 +13,63 @@ from astropy.coordinates import SkyCoord, EarthLocation, get_body
 
 from helper_functions import whatsGoingOnTonight, hourText, find_moondist
 
+import warnings
+warnings.filterwarnings('ignore')
 ### INPUTS #################################################
 
-# todo : put location info through as an argument for terminal use
+# read in from input.py
+exec(open("input.py").read())
+
+# import pdb; pdb.set_trace()
 
 ### LOCATION
 
+if type(latitude) == float: # choose if the user has input a location name or coordinates
+    location = EarthLocation(lat=latitude*u.deg, lon=longitude*u.deg, height=elevation*u.m)
+if latitude == None and observatory == None:
+    raise ValueError("Please input a location in input.py. You can input a latitude, longitude, and elevation, or the name of an observatory (see astropy.coordinates.EarthLocation.of_site)")
+if type(observatory) == str:
+    location = EarthLocation.of_site(observatory)
+
 # location = EarthLocation.of_site('Roque de los Muchachos') # <--- input location here
-
-location = EarthLocation(lat=52*u.deg, lon=-1.8*u.deg, height=140*u.m) # <-- birmingham
-
+# location = EarthLocation(lat=52*u.deg, lon=-1.8*u.deg, height=140*u.m) # <-- birmingham
 # location = EarthLocation(lat=53*deg, lon=1.5*deg, height=131*m) # or manually here
 
 
 ### OBSERVING DATE
-obsdate = Time('2025-02-05', location=location) # <--- input observing date here (YYYY-MM-DD) (if not looking for current observing conditions)
     
-now = Time(Time.now(), location=location, format='iso')
+now = Time(Time.now(), location=location, format='iso', scale='utc')
 today = Time(now.iso.split()[0], location=location) # <--- if you want to see tonight
 
-if str(sys.argv[1]) == 'now' or str(sys.argv[1]) == 'today' or str(sys.argv[1]) == 'tonight':
-    if float(now.datetime.hour) > 12.: # becaue of how the day is defined. Sunset is the date - 1 day, easier just to add a day now so I did
+if Observing_Date == 'now':
+    if float(now.datetime.hour) > 12.: # because of how the day is defined. Sunset is the date - 1 day, easier just to add a day now so I did
         observing_date = today  + 1*u.day # vis today
     else:
         observing_date = today
     plotnow = True
 else:
+    obsdate = Time(Observing_Date, location=location, format='iso', scale='utc')
     observing_date = obsdate + 1*u.day # vis on given date
     plotnow = False
+
     
-
 ### TARGET(S)
-vega = SkyCoord(ra="18h36m56.33635s", dec="+38d47m01.2802s", frame="icrs")
-V1315aql = SkyCoord(ra="19h13m54.5308677240s", dec="+12d18m03.239745228s", frame="icrs")
-LAMOST0359 = SkyCoord(ra="03h59m13.626515992s", dec="+40d50m35.095271748s", frame="icrs")
+
+targets = []
+for i in range(len(RA)):
+    targets.append(SkyCoord(ra=RA[i], dec=DEC[i], frame="icrs"))
+
+# vega = SkyCoord(ra="18h36m56.33635s", dec="+38d47m01.2802s", frame="icrs")
+# V1315aql = SkyCoord(ra="19h13m54.5308677240s", dec="+12d18m03.239745228s", frame="icrs")
+# LAMOST0359 = SkyCoord(ra="03h59m13.626515992s", dec="+40d50m35.095271748s", frame="icrs")
 
 
-# ADD TO LISTS HERE ALSO
-targets = [vega, V1315aql, LAMOST0359]
-starname = ['vega', 'V1315aql', 'LAMOST0359']
+# # ADD TO LISTS HERE ALSO
+# targets = [vega, V1315aql, LAMOST0359]
+# starname = ['vega', 'V1315aql', 'LAMOST0359']
 
 # TELESCOPE
-INT = True
+
 if INT:
     lower_shutter = 33 # degrees height
     lower_limit = 20 # degrees height
@@ -63,6 +78,8 @@ if INT:
 # SUN AND MOON
 sun = get_body('sun', observing_date)
 moon = get_body('moon', observing_date)
+
+import pdb; pdb.set_trace()
 
 ###############################################################
 
@@ -202,29 +219,32 @@ ax.annotate(f'Nauticle: {hourText(twlt[1][1])}',
 
 
 # astronomical
-ax.fill_between(np.linspace(twlt[2][0], twlt[2][1]), 0, 90, 
-                color=backColour, 
-                alpha=0.5
+try:
+    ax.fill_between(np.linspace(twlt[2][0], twlt[2][1]), 0, 90, 
+                    color=backColour, 
+                    alpha=0.5
+                   )
+    
+    ax.annotate(f'Astronomical: {hourText(twlt[2][0])}', 
+                (twlt[2][0] - 0.012*u.d, textHeight), 
+                color='white', 
+                alpha=0.7, 
+                rotation=90, 
+                fontsize=8, 
+                fontweight='bold'
                )
-
-ax.annotate(f'Astronomical: {hourText(twlt[2][0])}', 
-            (twlt[2][0] - 0.012*u.d, textHeight), 
-            color='white', 
-            alpha=0.7, 
-            rotation=90, 
-            fontsize=8, 
-            fontweight='bold'
-           )
-
-ax.annotate(f'Astronomical: {hourText(twlt[2][1])}', 
-            (twlt[2][1] + 0.0075*u.d, textHeight), 
-            color='white', 
-            alpha=0.7, 
-            rotation=90, 
-            fontsize=8, 
-            fontweight='bold'
-           )
-
+    
+    ax.annotate(f'Astronomical: {hourText(twlt[2][1])}', 
+                (twlt[2][1] + 0.0075*u.d, textHeight), 
+                color='white', 
+                alpha=0.7, 
+                rotation=90, 
+                fontsize=8, 
+                fontweight='bold'
+               )
+except:
+    pass
+    
 
 # ALTITUDE & MOON SEPARATION
 
@@ -275,7 +295,7 @@ ax.set_xticklabels(labels)
 ax.set_xlabel('Time (UTC)', fontsize=14)
 ax.set_ylim(0, 90), ax.set_ylabel('Altitude (degrees)', fontsize=14)
 
-if str(sys.argv[1]) == 'now' or str(sys.argv[1]) == 'today' or str(sys.argv[1]) == 'tonight':
+if Observing_Date == 'now':
     if now < sunriseset[0]:
         xlim = [now-0.75*u.hour, sunriseset[-1]+0.75*u.hour]
         ax.set_xlim(xlim[0], xlim[1])

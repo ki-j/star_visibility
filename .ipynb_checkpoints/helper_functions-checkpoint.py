@@ -17,17 +17,17 @@ from astropy.visualization import time_support, quantity_support
 quantity_support()
 time_support()
 from astropy.coordinates import SkyCoord, EarthLocation, get_body
-time_support()
-from astropy.coordinates import SkyCoord, EarthLocation, get_body
+
+exec(open("input.py").read())
 
 ### LOCATIONS #################################################
 
 # todo : put location info through as an argument for terminal use
-location = EarthLocation.of_site('Roque de los Muchachos') # <--- input location here
-observing_date = Time('2025-02-05', location=location) # <--- input observing date here
-target = SkyCoord(ra='05h55m10.30536s', dec='+07d24m25.4304s', frame='icrs') # <--- input target here (e.g. betelgeuse)
-sun = get_body('sun', observing_date)
-moon = get_body('moon', observing_date)
+# location = EarthLocation.of_site('Roque de los Muchachos') # <--- input location here
+# observing_date = Time('2025-02-05', location=location) # <--- input observing date here
+# target = SkyCoord(ra='05h55m10.30536s', dec='+07d24m25.4304s', frame='icrs') # <--- input target here (e.g. betelgeuse)
+# sun = get_body('sun', observing_date)
+# moon = get_body('moon', observing_date)
 
 ###############################################################
 
@@ -77,7 +77,10 @@ def riseset(location, time):
     # find hour angle of sunset
     numerator = np.sin(-0.5 *np.pi/180) - np.sin(location.lat.rad) * np.sin(sun.dec.rad)
     denominator = np.cos(location.lat.rad) * np.cos(sun.dec.rad)
-    haSun = np.arccos(numerator/denominator) *180/(15*np.pi)
+    try:
+        haSun = np.arccos(numerator/denominator) *180/(15*np.pi)
+    except:
+        pass
     # find sunset
     sunset = 12*u.hour + haSun*u.hour + time - 1*u.day
     # difference between sunset and middle of night
@@ -97,7 +100,11 @@ def twilight(location, time, angle):
     # find hour angle of twilight
     numerator = np.sin(-angle *np.pi/180) - np.sin(location.lat.rad) * np.sin(sun.dec.rad)
     denominator = np.cos(location.lat.rad) * np.cos(sun.dec.rad)
-    haSun = np.arccos(numerator/denominator) *180/(15*np.pi)
+    try:
+        haSun = np.arccos(numerator/denominator) *180/(15*np.pi)
+    except:
+        print("Sun does not reach astronomical twilight.")
+        pass
     # find end of twilight
     twilight_e = 12*u.hour + haSun*u.hour + time - 1*u.day
     # difference between twilight and middle of night
@@ -112,11 +119,11 @@ def twilight_zones(location, time):
     calculate the start and end times for civil, nauticle and astronomical twillight
     """
     # civil twilight
-    civil = twilight(location, time, 6) # sun 6 degrees below horizon
+    civil = twilight(location, time, 6.) # sun 6 degrees below horizon
     # nauticle twilight
-    nauticle = twilight(location, time, 12) # sun 12 degrees below horizon
+    nauticle = twilight(location, time, 12.) # sun 12 degrees below horizon
     # civil twilight
-    astronomical = twilight(location, time, 18) # sun 18 degrees below horizon
+    astronomical = twilight(location, time, 18.) # sun 18 degrees below horizon
     return civil, nauticle, astronomical
 
 ###############################################################
