@@ -29,7 +29,7 @@ observatory = 'Roque de los Muchachos' # e.g. 'Roque de los Muchachos' (string)
 # OBSERVING DATE
 ################
 
-Observing_Date = '2000-06-09' # enter a date (YYYY-MM-DD) or the string 'now'
+Observing_Date = 'now' # enter a date (YYYY-MM-DD) or the string 'now'
     
     
 

@@ -20,8 +20,6 @@ warnings.filterwarnings('ignore')
 # read in from input.py
 exec(open("input.py").read())
 
-# import pdb; pdb.set_trace()
-
 ### LOCATION
 
 if type(latitude) == float: # choose if the user has input a location name or coordinates
@@ -78,8 +76,6 @@ if INT:
 # SUN AND MOON
 sun = get_body('sun', observing_date)
 moon = get_body('moon', observing_date)
-
-import pdb; pdb.set_trace()
 
 ###############################################################
 
@@ -342,6 +338,14 @@ ax.annotate(f'Lower telescope limit',
 
 plt.legend()
 
-fig.savefig('object_visibility.pdf', bbox_inches='tight')
+### SAVE AND SHOW #############################################
+
+if len(starname) < 4:
+    object_names = '_'.join(starname).replace(' ', '_')
+else:
+    object_names = 'multiple_objects'
+
+fig.savefig(f'ims/object_visibility_{night[0].to_string().split()[0]}_{object_names}.pdf', bbox_inches='tight')
+fig.savefig(f'ims/object_visibility_{night[0].to_string().split()[0]}_{object_names}.png', bbox_inches='tight')
 
 plt.show()
