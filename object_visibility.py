@@ -29,10 +29,6 @@ if latitude == None and observatory == None:
 if type(observatory) == str:
     location = EarthLocation.of_site(observatory)
 
-# location = EarthLocation.of_site('Roque de los Muchachos') # <--- input location here
-# location = EarthLocation(lat=52*u.deg, lon=-1.8*u.deg, height=140*u.m) # <-- birmingham
-# location = EarthLocation(lat=53*deg, lon=1.5*deg, height=131*m) # or manually here
-
 
 ### OBSERVING DATE
     
@@ -71,7 +67,14 @@ for i in range(len(RA)):
 if INT:
     lower_shutter = 33 # degrees height
     lower_limit = 20 # degrees height
+    dead_zone = None
     telescope = 'INT (2.5 m)'
+
+if TNG:
+    lower_shutter = None
+    lower_limit = 14 # degrees height
+    dead_zone = 89 # cannot track within 1 deg of zenith
+    telescope = 'TNG (3.58 m)'
 
 # SUN AND MOON
 sun = get_body('sun', observing_date)
@@ -307,34 +310,50 @@ else:
 
 
 # TELESCOPE LIMITS
-# lower shutter limit
-ax.fill_between(np.linspace(xlim[0], xlim[1]), 0, lower_shutter, 
-                color='#000000', 
-                alpha=0.3
-               )
+try:
+    # lower shutter limit
+    ax.fill_between(np.linspace(xlim[0], xlim[1]), 0, lower_shutter, 
+                    color='#000000', 
+                    alpha=0.3
+                )
 
-ax.annotate(f'Lower shutter limit', 
-            (twlt[2][1] + 0.1*u.hour, lower_shutter - 1.5), 
-            color='orange', 
-            rotation=0, 
-            fontsize=8, 
-            fontweight='bold'
-           ) # annotate lower shutter line
+    ax.annotate(f'Lower shutter limit', 
+                (twlt[2][1] + 0.1*u.hour, lower_shutter - 1.5), 
+                color='orange', 
+                rotation=0, 
+                fontsize=8, 
+                fontweight='bold'
+            ) # annotate lower shutter line
 
-# lower telescope limit
-ax.fill_between(np.linspace(xlim[0], xlim[1]), 0, lower_limit, 
-                color='#000000', 
-                alpha=0.3
-               )
+    # lower telescope limit
+    ax.fill_between(np.linspace(xlim[0], xlim[1]), 0, lower_limit, 
+                    color='#000000', 
+                    alpha=0.3
+                )
 
-ax.annotate(f'Lower telescope limit', 
-            (twlt[2][1] + 0.1*u.hour, lower_limit - 1.5), 
-            color='orange', 
-            rotation=0, 
-            fontsize=8, 
-            fontweight='bold'
-           ) # annotate lower limit line
+    ax.annotate(f'Lower telescope limit', 
+                (twlt[2][1] + 0.1*u.hour, lower_limit - 1.5), 
+                color='orange', 
+                rotation=0, 
+                fontsize=8, 
+                fontweight='bold'
+            ) # annotate lower limit line
 
+    # dead zone (e.g. tng altaz limits)
+    ax.fill_between(np.linspace(xlim[0], xlim[1]), dead_zone, 90,
+                    color='#000000', 
+                    alpha=0.3
+                )
+
+    ax.annotate(f'Dead zone', 
+                (twlt[2][1] + 0.1*u.hour, dead_zone - 0.5), 
+                color='orange', 
+                rotation=0, 
+                fontsize=8, 
+                fontweight='bold'
+            ) # annotate lower limit line
+except:
+    pass
 
 plt.legend()
 

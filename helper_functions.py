@@ -6,17 +6,9 @@ from astropy.time import Time
 from astropy import units as u
 from astropy import constants as const
 from astropy.visualization import time_support, quantity_support
-quantity_support()# imports
-import numpy as np
-from matplotlib import pyplot as plt
-
-from astropy.time import Time
-from astropy import units as u
-from astropy import constants as const
-from astropy.visualization import time_support, quantity_support
+from astropy.coordinates import SkyCoord, EarthLocation, get_body
 quantity_support()
 time_support()
-from astropy.coordinates import SkyCoord, EarthLocation, get_body
 
 exec(open("input.py").read())
 
@@ -49,6 +41,9 @@ def transits(location, target, time):
     """
     # transit altitude
     transitAltitude = (90*deg - location.lat) + target.dec
+    if transitAltitude > 90*deg:
+        transitAltitude = transitAltitude - 180*u.deg
+        
     # RA of the Sun on the observing date
     raSun = get_body('sun', time).ra.hour *u.hour
     # middle of the nigth (UTC)
@@ -155,15 +150,21 @@ def find_alt(location, target, ha):
     """ find the altitude of an objects for a given location and altitude """
     lat = location.lat.rad # latitude in radians
     dec = target.dec.rad # declination in radians
+    pi2 = np.pi/2
+
     if type(ha) != list:
         sinalt = np.sin(lat)*np.sin(dec) + np.cos(lat)*np.cos(dec)*np.cos(ha.to('radian'))
         alt = np.arcsin(sinalt)
+        if alt > pi2*u.radian:
+            alt = alt - np.pi*u.radian
         alts = alt.to(deg)
     else:
         alts = []
         for h in ha:
             sinalt = np.sin(lat)*np.sin(dec) + np.cos(lat)*np.cos(dec)*np.cos(h.to('radian'))
             alt = np.arcsin(sinalt)
+            if alt > pi2*u.radian:
+                alt = alt - np.pi*u.radian
             alts.append(alt.to(deg))
     return alts
 
